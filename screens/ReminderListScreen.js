@@ -46,6 +46,9 @@ export default function ReminderListScreen({ navigation }) {
         <AppCard style={styles.card}>
             <Text style={styles.label}>⏰ Čas: <Text style={styles.value}>{item.time}</Text></Text>
             <Text style={styles.label}>📅 Dny: <Text style={styles.value}>{item.daysOfWeek.join(', ')}</Text></Text>
+            {item.workoutPlanName && (
+                <Text style={styles.label}>🏋️ Plán: <Text style={styles.value}>{item.workoutPlanName}</Text></Text>
+            )}
 
             <AppButton
                 title="Upravit"
@@ -58,6 +61,7 @@ export default function ReminderListScreen({ navigation }) {
                 onPress={() => deleteReminder(item.id)}
                 style={styles.button}
             />
+
         </AppCard>
     );
 

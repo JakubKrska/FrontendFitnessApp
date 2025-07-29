@@ -16,7 +16,7 @@ import { apiFetch } from '../api';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-const DAYS = ['Po', 'Ut', 'St', 'Ct', 'Pa', 'So', 'Ne'];
+const DAYS = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 const DAY_MAP = { Po: 1, Ut: 2, St: 3, Ct: 4, Pa: 5, So: 6, Ne: 0 };
 
 
