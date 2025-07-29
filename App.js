@@ -29,6 +29,7 @@ import ExerciseDetailsScreen from "./screens/ExerciseDetailsScreen";
 import ReminderListScreen from "./screens/ReminderListScreen";
 import WeightScreen from "./screens/WeightScreen";
 import SelectPlanForExerciseScreen from "./screens/SelectPlanForExerciseScreen";
+import EditReminderScreen from "./screens/EditReminderScreen";
 
 
 const Stack = createNativeStackNavigator();
@@ -64,7 +65,7 @@ export default function App() {
     return (
         <>
             <NavigationContainer>
-                <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+                <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }} id={}>
                     {/* Onboarding a autentizace */}
                     <Stack.Screen name="Welcome" component={WelcomeScreen} />
                     <Stack.Screen name="Login" component={LoginScreen} />
@@ -90,6 +91,8 @@ export default function App() {
                     <Stack.Screen name="ExerciseDetails" component={ExerciseDetailsScreen} />
                     <Stack.Screen name="WorkoutPlanDetails" component={WorkoutPlanDetailsScreen} />
                     <Stack.Screen name="SelectPlanForExercise" component={SelectPlanForExerciseScreen} />
+                    <Stack.Screen name="EditReminder" component={EditReminderScreen} />
+
 
 
 

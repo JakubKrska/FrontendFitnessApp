@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-    ScrollView,
-    Alert,
-    StyleSheet,
-    View,
-} from "react-native";
+import { ScrollView, Alert, StyleSheet, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
 
@@ -18,6 +13,7 @@ const EditProfileScreen = ({ navigation }) => {
     const [formData, setFormData] = useState({
         name: "",
         plainPassword: "",
+        confirmPassword: "",
         age: "",
         height: "",
         weight: "",
@@ -32,15 +28,14 @@ const EditProfileScreen = ({ navigation }) => {
             try {
                 const token = await AsyncStorage.getItem("token");
                 const data = await apiFetch("/users/me", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
-                setUserId(data.id); // <-- potřebujeme id pro PUT
+                setUserId(data.id);
                 setFormData({
                     name: data.name || "",
                     plainPassword: "",
+                    confirmPassword: "",
                     age: data.age?.toString() || "",
                     height: data.height?.toString() || "",
                     weight: data.weight?.toString() || "",
@@ -49,35 +44,25 @@ const EditProfileScreen = ({ navigation }) => {
                     experienceLevel: data.experienceLevel || "",
                 });
             } catch (err) {
-                console.error("Chyba při načítání uživatele:", err);
-                Alert.alert("Nepodařilo se načíst uživatelská data.");
+                Alert.alert("Chyba", "Nepodařilo se načíst uživatele.");
                 navigation.goBack();
             }
         };
-
         fetchUser();
     }, []);
 
     const handleChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const validate = () => {
-        const { name, age, height, weight } = formData;
+        const { name, age, height, weight, plainPassword, confirmPassword } = formData;
         if (!name || !age || !height || !weight) {
             Alert.alert("Chyba", "Vyplň prosím všechna povinná pole.");
             return false;
         }
-        if (isNaN(age) || age <= 0 || age > 120) {
-            Alert.alert("Chyba", "Zadej platný věk.");
-            return false;
-        }
-        if (isNaN(height) || height < 100 || height > 250) {
-            Alert.alert("Chyba", "Zadej platnou výšku v cm.");
-            return false;
-        }
-        if (isNaN(weight) || weight < 30 || weight > 300) {
-            Alert.alert("Chyba", "Zadej platnou váhu v kg.");
+        if (plainPassword && plainPassword !== confirmPassword) {
+            Alert.alert("Chyba", "Zadaná hesla se neshodují.");
             return false;
         }
         return true;
@@ -85,16 +70,14 @@ const EditProfileScreen = ({ navigation }) => {
 
     const handleSubmit = async () => {
         if (!validate()) return;
-        if (!userId) {
-            Alert.alert("Chyba", "Chybí ID uživatele.");
-            return;
-        }
 
         try {
             const token = await AsyncStorage.getItem("token");
+
             const payload = {
                 ...formData,
                 ...(formData.plainPassword === "" && { plainPassword: undefined }),
+                confirmPassword: undefined,
             };
 
             await apiFetch(`/users/${userId}`, {
@@ -106,11 +89,10 @@ const EditProfileScreen = ({ navigation }) => {
                 body: JSON.stringify(payload),
             });
 
-            Alert.alert("Profil upraven");
+            Alert.alert("Úspěch", "Profil byl upraven.");
             navigation.goBack();
         } catch (err) {
-            console.error("Chyba:", err);
-            Alert.alert("Nepodařilo se upravit profil");
+            Alert.alert("Chyba", "Nepodařilo se upravit profil.");
         }
     };
 
@@ -120,9 +102,31 @@ const EditProfileScreen = ({ navigation }) => {
 
             <AppTextInput placeholder="Jméno" value={formData.name} onChangeText={(val) => handleChange("name", val)} />
             <AppTextInput placeholder="Nové heslo (volitelné)" secureTextEntry value={formData.plainPassword} onChangeText={(val) => handleChange("plainPassword", val)} />
-            <AppTextInput placeholder="Věk" keyboardType="numeric" value={formData.age} onChangeText={(val) => handleChange("age", val)} />
-            <AppTextInput placeholder="Výška (cm)" keyboardType="numeric" value={formData.height} onChangeText={(val) => handleChange("height", val)} />
-            <AppTextInput placeholder="Váha (kg)" keyboardType="numeric" value={formData.weight} onChangeText={(val) => handleChange("weight", val)} />
+            <AppTextInput placeholder="Potvrzení hesla" secureTextEntry value={formData.confirmPassword} onChangeText={(val) => handleChange("confirmPassword", val)} />
+
+            <TextLabel label="Věk" />
+            <Picker selectedValue={formData.age} onValueChange={(val) => handleChange("age", val)} style={styles.picker}>
+                <Picker.Item label="Vyber věk..." value="" />
+                {Array.from({ length: 91 }, (_, i) => i + 10).map((val) => (
+                    <Picker.Item key={val} label={`${val} let`} value={val.toString()} />
+                ))}
+            </Picker>
+
+            <TextLabel label="Výška (cm)" />
+            <Picker selectedValue={formData.height} onValueChange={(val) => handleChange("height", val)} style={styles.picker}>
+                <Picker.Item label="Vyber výšku..." value="" />
+                {Array.from({ length: 151 }, (_, i) => i + 100).map((val) => (
+                    <Picker.Item key={val} label={`${val} cm`} value={val.toString()} />
+                ))}
+            </Picker>
+
+            <TextLabel label="Váha (kg)" />
+            <Picker selectedValue={formData.weight} onValueChange={(val) => handleChange("weight", val)} style={styles.picker}>
+                <Picker.Item label="Vyber váhu..." value="" />
+                {Array.from({ length: 221 }, (_, i) => i + 30).map((val) => (
+                    <Picker.Item key={val} label={`${val} kg`} value={val.toString()} />
+                ))}
+            </Picker>
 
             <TextLabel label="Pohlaví" />
             <Picker selectedValue={formData.gender} onValueChange={(val) => handleChange("gender", val)} style={styles.picker}>
@@ -170,7 +174,6 @@ const styles = StyleSheet.create({
         borderColor: colors.gray,
         borderWidth: 1,
         borderRadius: 6,
-        paddingHorizontal: spacing.small,
         marginBottom: spacing.medium,
     },
 });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -10,6 +10,7 @@ import {
     Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import AppTitle from '../components/ui/AppTitle';
 import AppCard from '../components/ui/AppCard';
@@ -17,13 +18,15 @@ import AppButton from '../components/ui/AppButton';
 import { colors, spacing } from '../components/ui/theme';
 import { apiFetch } from '../api';
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreen = () => {
+    const navigation = useNavigation();
     const [user, setUser] = useState(null);
     const [badges, setBadges] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchUserData = async () => {
+    const fetchUserData = useCallback(async () => {
         try {
+            setLoading(true);
             const token = await AsyncStorage.getItem('token');
             if (!token) return;
 
@@ -41,11 +44,13 @@ const ProfileScreen = ({ navigation }) => {
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchUserData();
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchUserData();
+        }, [fetchUserData])
+    );
 
     const renderBadge = ({ item }) => (
         <View style={styles.badgeContainer}>
@@ -88,7 +93,6 @@ const ProfileScreen = ({ navigation }) => {
             </AppCard>
 
             <AppButton title="Upravit profil" onPress={() => navigation.navigate("EditProfile")} />
-            <AppButton title="Změnit heslo" onPress={() => navigation.navigate("ChangePassword")} />
             <AppButton title="Moje připomínky" onPress={() => navigation.navigate("Reminders")} />
 
             <Text style={styles.badgesTitle}>Moje odznaky</Text>
