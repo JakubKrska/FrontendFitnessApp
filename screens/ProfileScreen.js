@@ -8,6 +8,7 @@ import {
     Alert,
     FlatList,
     Image,
+    TouchableOpacity,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -17,11 +18,13 @@ import AppCard from '../components/ui/AppCard';
 import AppButton from '../components/ui/AppButton';
 import { colors, spacing } from '../components/ui/theme';
 import { apiFetch } from '../api';
+import BadgeDetailModal from '../components/BadgeDetailModal'; // 👈 ujisti se, že cesta je správná
 
 const ProfileScreen = () => {
     const navigation = useNavigation();
     const [user, setUser] = useState(null);
     const [badges, setBadges] = useState([]);
+    const [selectedBadge, setSelectedBadge] = useState(null); // 👈 pro modal
     const [loading, setLoading] = useState(true);
 
     const fetchUserData = useCallback(async () => {
@@ -53,14 +56,17 @@ const ProfileScreen = () => {
     );
 
     const renderBadge = ({ item }) => (
-        <View style={styles.badgeContainer}>
+        <TouchableOpacity
+            style={styles.badgeContainer}
+            onPress={() => setSelectedBadge(item)}
+        >
             {item.icon ? (
                 <Image source={{ uri: item.icon }} style={styles.icon} />
             ) : (
                 <View style={styles.placeholderIcon} />
             )}
             <Text style={styles.badgeName}>{item.name}</Text>
-        </View>
+        </TouchableOpacity>
     );
 
     if (loading) {
@@ -102,6 +108,13 @@ const ProfileScreen = () => {
                 renderItem={renderBadge}
                 numColumns={3}
                 contentContainerStyle={styles.badgeList}
+            />
+
+            {/* ✅ MODAL pro detail odznaku */}
+            <BadgeDetailModal
+                visible={!!selectedBadge}
+                badge={selectedBadge}
+                onClose={() => setSelectedBadge(null)}
             />
         </ScrollView>
     );
