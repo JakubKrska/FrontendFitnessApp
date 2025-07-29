@@ -4,6 +4,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import { apiFetch } from "./api";
+import * as Notifications from "expo-notifications";
+import * as Permissions from "expo-permissions";
+
 
 // Auth and onboarding
 import WelcomeScreen from "./screens/WelcomeScreen";
@@ -60,25 +63,39 @@ export default function App() {
         checkStartupState();
     }, []);
 
-    if (!initialRoute) return null; // loader nebo splash screen
+    useEffect(() => {
+        const setupNotifications = async () => {
+            const { status } = await Notifications.getPermissionsAsync();
+            if (status !== 'granted') {
+                await Notifications.requestPermissionsAsync();
+            }
+
+            Notifications.setNotificationHandler({
+                handleNotification: async () => ({
+                    shouldShowAlert: true,
+                    shouldPlaySound: true,
+                    shouldSetBadge: false,
+                }),
+            });
+        };
+
+        setupNotifications();
+    }, []);
+
+    if (!initialRoute) return null;
 
     return (
         <>
             <NavigationContainer>
-                <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }} id={}>
-                    {/* Onboarding a autentizace */}
+                <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+                    {/* Tvůj stack */}
                     <Stack.Screen name="Welcome" component={WelcomeScreen} />
                     <Stack.Screen name="Login" component={LoginScreen} />
                     <Stack.Screen name="Register" component={RegisterScreen} />
                     <Stack.Screen name="OnboardingGoal" component={OnboardingGoalScreen} />
                     <Stack.Screen name="RecommendedPlans" component={RecommendedPlansScreen} />
-
-                    {/* Hlavní aplikace s tab navigací */}
                     <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
-
-                    {/* Akční screeny */}
                     <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-                    <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
                     <Stack.Screen name="WeightScreen" component={WeightScreen} />
                     <Stack.Screen name="WorkoutSession" component={WorkoutSessionScreen} />
                     <Stack.Screen name="WorkoutSummary" component={WorkoutSummaryScreen} />
@@ -86,16 +103,12 @@ export default function App() {
                     <Stack.Screen name="PerformanceChart" component={PerformanceChartScreen} />
                     <Stack.Screen name="Badges" component={BadgesScreen} />
                     <Stack.Screen name="WorkoutPlansDetail" component={WorkoutPlanDetailsScreen} />
-                    <Stack.Screen name="Reminders" component={ReminderFormScreen} />
-                    <Stack.Screen name="RemindersAdd" component={ReminderListScreen} />
+                    <Stack.Screen name="Reminders" component={ReminderListScreen} />
+                    <Stack.Screen name="AddReminder" component={ReminderFormScreen} />
                     <Stack.Screen name="ExerciseDetails" component={ExerciseDetailsScreen} />
                     <Stack.Screen name="WorkoutPlanDetails" component={WorkoutPlanDetailsScreen} />
                     <Stack.Screen name="SelectPlanForExercise" component={SelectPlanForExerciseScreen} />
                     <Stack.Screen name="EditReminder" component={EditReminderScreen} />
-
-
-
-
                 </Stack.Navigator>
             </NavigationContainer>
             <Toast />

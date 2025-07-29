@@ -1,79 +1,123 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    View, Text, TextInput, StyleSheet, Alert, ScrollView
+    ScrollView,
+    StyleSheet,
+    Text,
+    Alert,
+    View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AppTitle from '../components/ui/AppTitle';
+import { apiFetch } from '../api';
+import AppTextInput from '../components/ui/AppTextInput';
 import AppButton from '../components/ui/AppButton';
 import { colors, spacing } from '../components/ui/theme';
-import { apiFetch } from '../api';
-import DayPicker from '../components/utils/DayPicker';
 
-export default function EditReminderScreen({ route, navigation }) {
-    const { reminder } = route.params;
-    const [time, setTime] = useState(reminder.time);
-    const [days, setDays] = useState(reminder.daysOfWeek || []);
+const DAYS = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
-    const handleUpdate = async () => {
+const EditReminderScreen = ({ route, navigation }) => {
+    const reminder = route.params?.reminder;
+    const [time, setTime] = useState(reminder?.time || '');
+    const [selectedDays, setSelectedDays] = useState(reminder?.daysOfWeek || []);
+
+    const toggleDay = (day) => {
+        setSelectedDays((prev) =>
+            prev.includes(day)
+                ? prev.filter((d) => d !== day)
+                : [...prev, day]
+        );
+    };
+
+    const submit = async () => {
+        if (!time.match(/^\d{2}:\d{2}$/)) {
+            Alert.alert('Chyba', 'Zadej čas ve formátu HH:mm (např. 07:30)');
+            return;
+        }
+
+        if (selectedDays.length === 0) {
+            Alert.alert('Chyba', 'Vyber alespoň jeden den');
+            return;
+        }
+
         try {
-            const token = await AsyncStorage.getItem("token");
+            const token = await AsyncStorage.getItem('token');
 
+
+
+            // ✅ Odešli změny na backend
             await apiFetch(`/reminders/${reminder.id}`, {
-                method: "PUT",
+                method: 'PUT',
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     time,
-                    daysOfWeek: days,
-                    workoutPlanId: reminder.workoutPlanId,
+                    daysOfWeek: selectedDays,
+                    workoutPlanId: null,
                 }),
             });
 
-            Alert.alert("Úspěch", "Připomínka aktualizována");
+
+
+            Alert.alert('Připomínka upravena');
             navigation.goBack();
         } catch (err) {
-            Alert.alert("Chyba", "Nepodařilo se upravit připomínku.");
+            Alert.alert('Chyba', 'Nepodařilo se upravit připomínku.');
         }
     };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            <AppTitle>Úprava připomínky</AppTitle>
-
-            <Text style={styles.label}>Čas (např. 07:00)</Text>
-            <TextInput
-                style={styles.input}
+            <Text style={styles.label}>Změň čas (např. 07:00)</Text>
+            <AppTextInput
                 value={time}
                 onChangeText={setTime}
-                placeholder="HH:MM"
+                placeholder="HH:mm"
+                keyboardType="numeric"
             />
 
-            <Text style={styles.label}>Dny v týdnu</Text>
-            <DayPicker selectedDays={days} onChange={setDays} />
+            <Text style={styles.label}>Změň dny</Text>
+            <View style={styles.dayGrid}>
+                {DAYS.map((day) => (
+                    <AppButton
+                        key={day}
+                        title={day}
+                        onPress={() => toggleDay(day)}
+                        color={selectedDays.includes(day) ? colors.primary : colors.gray}
+                        style={styles.dayButton}
+                    />
+                ))}
+            </View>
 
-            <AppButton title="Uložit změny" onPress={handleUpdate} />
+            <AppButton title="Uložit změny" onPress={submit} />
         </ScrollView>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
         padding: spacing.large,
         backgroundColor: colors.background,
+        flexGrow: 1,
     },
     label: {
-        fontSize: 16,
         fontWeight: 'bold',
-        marginVertical: spacing.small,
+        fontSize: 16,
+        marginBottom: spacing.small,
         color: colors.text,
     },
-    input: {
-        borderWidth: 1,
-        borderColor: colors.gray,
-        padding: spacing.small,
-        borderRadius: 6,
-        backgroundColor: colors.white,
+    dayGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginBottom: spacing.large,
+        gap: 8,
+    },
+    dayButton: {
+        marginRight: spacing.small / 2,
+        marginBottom: spacing.small,
+        minWidth: 50,
+        justifyContent: 'center',
     },
 });
+
+export default EditReminderScreen;
