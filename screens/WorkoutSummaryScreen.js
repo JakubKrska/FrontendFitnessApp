@@ -51,32 +51,8 @@ const WorkoutSummaryScreen = ({ route, navigation }) => {
 
                 if (!token || !userId || !passedPlanId) return;
 
-                // 🔐 Odznaky
-                const response = await apiFetch(`/badges/unlock`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({
-                        userId,
-                        workoutPlanId: passedPlanId,
-                        completedAt,
-                    }),
-                });
 
-                const newBadges = response?.newBadges ?? [];
 
-                if (newBadges.length > 0) {
-                    Toast.show({
-                        type: 'success',
-                        text1: '🎉 Nový odznak!',
-                        text2: `${newBadges[0].name}`,
-                        onPress: () => setSelectedBadge(newBadges[0]),
-                    });
-                }
-
-                // 📘 Najdi historii
                 const historyList = await apiFetch(`/users/me/history`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
@@ -89,7 +65,7 @@ const WorkoutSummaryScreen = ({ route, navigation }) => {
 
                 if (!thisWorkout?.id) return;
 
-                // 📦 Výkon
+
                 const perf = await apiFetch(`/workout-performance/${thisWorkout.id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });

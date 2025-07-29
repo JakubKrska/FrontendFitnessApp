@@ -217,10 +217,7 @@ const WorkoutSessionScreen = () => {
                     Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                    id: historyId,
-                    userId,
                     workoutPlanId: planId,
-                    completedAt,
                 }),
             });
 

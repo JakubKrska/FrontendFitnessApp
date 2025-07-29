@@ -33,6 +33,8 @@ const ProfileScreen = () => {
             const token = await AsyncStorage.getItem('token');
             if (!token) return;
 
+            console.log("Token při načítání odznaků:", token); // ✅ sem to patří
+
             const userData = await apiFetch('/users/me', {
                 headers: { Authorization: `Bearer ${token}` },
             });
