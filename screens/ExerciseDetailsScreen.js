@@ -8,9 +8,8 @@ import {
     Text,
     Alert,
 } from 'react-native';
-import {useRoute} from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 import AppTitle from '../components/ui/AppTitle';
 import AppCard from '../components/ui/AppCard';
@@ -19,7 +18,6 @@ import AppTextInput from '../components/ui/AppTextInput';
 import { colors, spacing } from '../components/ui/theme';
 import { apiFetch } from '../api';
 import { useNavigation } from '@react-navigation/native';
-
 
 const ExerciseDetailsScreen = () => {
     const route = useRoute();
@@ -30,8 +28,6 @@ const ExerciseDetailsScreen = () => {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState('');
     const navigation = useNavigation();
-
-
 
     useEffect(() => {
         fetchExercise();
@@ -129,6 +125,7 @@ const ExerciseDetailsScreen = () => {
                     </View>
                 )}
             </AppCard>
+
             <AppButton
                 title="Přidat do tréninkového plánu"
                 onPress={() => navigation.navigate('SelectPlanForExercise', { exerciseId: exercise.id })}
@@ -139,10 +136,9 @@ const ExerciseDetailsScreen = () => {
                 <Text style={styles.italic}>Zatím žádné komentáře.</Text>
             ) : (
                 comments.map((c) => (
-                    <AppCard key={c.id}>
-                        <Text style={styles.label}>{c.commentText}</Text>
-
-                    </AppCard>
+                    <View key={c.id} style={styles.commentCard}>
+                        <Text style={styles.commentText}>{c.commentText}</Text>
+                    </View>
                 ))
             )}
 
@@ -194,6 +190,22 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
         marginTop: spacing.medium,
         borderRadius: 8,
+    },
+    commentCard: {
+        backgroundColor: colors.card,
+        padding: spacing.medium,
+        borderRadius: 10,
+        marginBottom: spacing.small,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    commentText: {
+        fontSize: 15,
+        color: colors.text,
+        lineHeight: 20,
     },
 });
 

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { Picker } from '@react-native-picker/picker'; // nezapomeň nainstalovat: npm install @react-native-picker/picker
+import { Picker } from '@react-native-picker/picker';
 
 import WorkoutHistoryCard from '../components/WorkoutHistoryCard';
 import AppTitle from '../components/ui/AppTitle';
