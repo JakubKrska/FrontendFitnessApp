@@ -1,10 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ActivityIndicator,
-    ScrollView,
     Alert,
     FlatList,
     Image,
@@ -12,20 +11,22 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 import AppTitle from '../components/ui/AppTitle';
 import AppCard from '../components/ui/AppCard';
 import AppButton from '../components/ui/AppButton';
 import { colors, spacing } from '../components/ui/theme';
 import { apiFetch } from '../api';
-import BadgeDetailModal from '../components/BadgeDetailModal'; // 👈 ujisti se, že cesta je správná
+import BadgeDetailModal from '../components/BadgeDetailModal';
 
 const ProfileScreen = () => {
     const navigation = useNavigation();
     const [user, setUser] = useState(null);
     const [badges, setBadges] = useState([]);
-    const [selectedBadge, setSelectedBadge] = useState(null); // 👈 pro modal
+    const [selectedBadge, setSelectedBadge] = useState(null);
     const [loading, setLoading] = useState(true);
+    const previousBadgeIds = useRef(new Set());
 
     const fetchUserData = useCallback(async () => {
         try {
@@ -33,7 +34,7 @@ const ProfileScreen = () => {
             const token = await AsyncStorage.getItem('token');
             if (!token) return;
 
-            console.log("Token při načítání odznaků:", token); // ✅ sem to patří
+            console.log("Token při načítání odznaků:", token);
 
             const userData = await apiFetch('/users/me', {
                 headers: { Authorization: `Bearer ${token}` },
@@ -43,6 +44,21 @@ const ProfileScreen = () => {
             const badgeData = await apiFetch('/users/me/badges', {
                 headers: { Authorization: `Bearer ${token}` },
             });
+
+            // Zobraz toast jen pro nové odznaky
+            const newBadges = badgeData.filter((badge) => !previousBadgeIds.current.has(badge.id));
+            if (newBadges.length > 0) {
+                newBadges.forEach((badge) => {
+                    Toast.show({
+                        type: "success",
+                        text1: "🏅 Nový odznak!",
+                        text2: badge.name,
+                        visibilityTime: 4000,
+                    });
+                    previousBadgeIds.current.add(badge.id);
+                });
+            }
+
             setBadges(badgeData);
         } catch (error) {
             Alert.alert('Chyba', 'Nepodařilo se načíst profil nebo odznaky.');
@@ -88,7 +104,7 @@ const ProfileScreen = () => {
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.container}>
             <AppTitle>Můj profil</AppTitle>
 
             <AppCard>
@@ -112,18 +128,18 @@ const ProfileScreen = () => {
                 contentContainerStyle={styles.badgeList}
             />
 
-            {/* ✅ MODAL pro detail odznaku */}
             <BadgeDetailModal
                 visible={!!selectedBadge}
                 badge={selectedBadge}
                 onClose={() => setSelectedBadge(null)}
             />
-        </ScrollView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         padding: spacing.large,
         backgroundColor: colors.background,
     },

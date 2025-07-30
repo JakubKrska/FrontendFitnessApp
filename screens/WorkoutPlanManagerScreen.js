@@ -163,9 +163,7 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
 
     return (
         <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
-            <AppTitle>
-                {editingPlan ? `Upravuješ plán: ${editingPlan.name}` : 'Přidat nový plán'}
-            </AppTitle>
+
 
             {/* Filtrace */}
             <View style={styles.filterSection}>
@@ -188,7 +186,10 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
                 </Picker>
             </View>
 
-            {/* Formulář */}
+            <AppTitle>
+                {editingPlan ? `Upravuješ plán: ${editingPlan.name}` : 'Přidat nový plán'}
+            </AppTitle>
+
             <AppTextInput
                 placeholder="Název plánu"
                 value={formData.name}

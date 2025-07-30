@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, Alert, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Speech from "expo-speech";
 import { Bar } from "react-native-progress";
 import Slider from "@react-native-community/slider";
-import { v4 as uuidv4 } from "uuid";
+import Toast from "react-native-toast-message";
 
 import AppTitle from "../components/ui/AppTitle";
 import AppCard from "../components/ui/AppCard";
 import AppButton from "../components/ui/AppButton";
 import { colors, spacing } from "../components/ui/theme";
 import { apiFetch } from "../api";
+
+const generateId = () =>
+    'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 
 const motivationalPhrases = [
     "Skvělá práce, jen tak dál!",
@@ -47,7 +54,9 @@ const WorkoutSessionScreen = () => {
     const [setTimeoutId, setSetTimeoutId] = useState(null);
     const [forceEndRequested, setForceEndRequested] = useState(false);
     const [performanceLog, setPerformanceLog] = useState([]);
-    const historyId = uuidv4();
+    const historyId = generateId();
+
+
 
 
     useEffect(() => {
@@ -80,6 +89,7 @@ const WorkoutSessionScreen = () => {
             }
             setExerciseDetails(details);
         };
+
 
         const fetchPlanName = async () => {
             try {
@@ -161,7 +171,7 @@ const WorkoutSessionScreen = () => {
         setIsResting(true);
 
         const perf = {
-            id: uuidv4(),
+            id: generateId(),
             exerciseId: current.exerciseId,
             setsCompleted: 1,
             repsCompleted: current.reps,
@@ -210,7 +220,7 @@ const WorkoutSessionScreen = () => {
 
         console.log("🧾 Loguju dokončení tréninku...");
         try {
-            await apiFetch("/workout-history", {
+            const result = await apiFetch("/workout-history", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -220,6 +230,20 @@ const WorkoutSessionScreen = () => {
                     workoutPlanId: planId,
                 }),
             });
+
+
+            const newBadges = result.newBadges || [];
+            if (newBadges.length > 0) {
+                newBadges.forEach((badge) => {
+                    Toast.show({
+                        type: "success",
+                        text1: `🎉 Nový odznak!`,
+                        text2: badge.name,
+                        visibilityTime: 4000,
+                    });
+                });
+            }
+
 
             for (const perf of performanceLog) {
                 await apiFetch("/workout-performance", {
@@ -238,6 +262,7 @@ const WorkoutSessionScreen = () => {
                     }),
                 });
             }
+
             console.log("✅ Workout history uložena");
         } catch (e) {
             console.error("❌ Chyba při ukládání historie", e);

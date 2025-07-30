@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import { apiFetch } from "./api";
 import * as Notifications from "expo-notifications";
-import * as Permissions from "expo-permissions";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 
 // Auth and onboarding
@@ -85,7 +85,7 @@ export default function App() {
     if (!initialRoute) return null;
 
     return (
-        <>
+        <GestureHandlerRootView style={{ flex: 1 }}>
             <NavigationContainer>
                 <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
                     {/* Tvůj stack */}
@@ -112,6 +112,6 @@ export default function App() {
                 </Stack.Navigator>
             </NavigationContainer>
             <Toast />
-        </>
+        </GestureHandlerRootView>
     );
 }

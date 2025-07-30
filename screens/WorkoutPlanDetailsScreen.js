@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -7,17 +7,16 @@ import {
     StyleSheet,
     ActivityIndicator
 } from 'react-native';
-import {Picker} from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DraggableFlatList from 'react-native-draggable-flatlist';
 
 import AppTitle from '../components/ui/AppTitle';
 import AppTextInput from '../components/ui/AppTextInput';
 import AppButton from '../components/ui/AppButton';
 import AppCard from '../components/ui/AppCard';
-import {colors, spacing} from '../components/ui/theme';
-import {useNavigation} from '@react-navigation/native';
-import {apiFetch} from '../api';
+import { colors, spacing } from '../components/ui/theme';
+import { useNavigation } from '@react-navigation/native';
+import { apiFetch } from '../api';
 
 const WorkoutPlanDetailsScreen = ({ route }) => {
     const { planId, prefillExerciseId } = route.params || {};
@@ -28,7 +27,6 @@ const WorkoutPlanDetailsScreen = ({ route }) => {
     const [exercises, setExercises] = useState([]);
     const [availableExercises, setAvailableExercises] = useState([]);
     const scrollRef = useRef();
-    const isValidUUID = (id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 
     const [formData, setFormData] = useState({
         exerciseId: '',
@@ -59,8 +57,6 @@ const WorkoutPlanDetailsScreen = ({ route }) => {
             setPlan(planData);
             setExercises(exData);
             setAvailableExercises(allExercises);
-
-            console.log("📦 Načtené cviky v plánu:", exData);
 
             if (prefillExerciseId) {
                 setFormData((prev) => ({
@@ -99,7 +95,14 @@ const WorkoutPlanDetailsScreen = ({ route }) => {
             });
 
             await loadData();
-            setFormData({ exerciseId: '', sets: 3, reps: 10, orderIndex: exercises.length + 1, restSeconds: 60,  weight: '' });
+            setFormData({
+                exerciseId: '',
+                sets: 3,
+                reps: 10,
+                orderIndex: exercises.length + 1,
+                restSeconds: 60,
+                weight: ''
+            });
         } catch (err) {
             Alert.alert('Chyba', err.message || 'Nepodařilo se přidat cvik.');
         }
@@ -107,54 +110,19 @@ const WorkoutPlanDetailsScreen = ({ route }) => {
 
     const handleDelete = async (id) => {
         try {
-            const token = await AsyncStorage.getItem("token");
             const response = await apiFetch(`/workout-exercises/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.status === 200) {
-                await loadData(); // znovunačtení po mazání
+                await loadData();
             } else {
-                console.warn("❌ Mazání selhalo:", response);
                 Alert.alert("Chyba", "Nepodařilo se odebrat cvik z plánu.");
             }
         } catch (err) {
             console.error("❌ Chyba při DELETE:", err);
         }
-    };
-
-    const renderItem = (item, drag) => {
-        console.log("🔍 Položka renderItem:", item);
-
-        if (!item.id || !isValidUUID(item.id)) {
-            console.warn("⚠️ Neplatné nebo chybějící item.id:", item);
-        }
-
-        const full = availableExercises.find((e) => e.id === item.exerciseId);
-
-        return (
-            <AppCard onLongPress={drag}>
-                <Text style={styles.exerciseName}>{full?.name || 'Neznámý cvik'}</Text>
-                <Text>{item.sets}x{item.reps} • {item.restSeconds || 60}s pauza • Pořadí: {item.orderIndex}</Text>
-                <AppButton
-                    title="Odebrat"
-                    color={colors.danger}
-                    onPress={async () => {
-                        try {
-                            await apiFetch(`/workout-exercises/${item.id}`, {
-                                method: "DELETE",
-                                headers: { Authorization: `Bearer ${token}` },
-                            });
-                            await loadData();
-                        } catch (err) {
-                            console.error("❌ Chyba při mazání cviku:", err);
-                            Alert.alert("Chyba", "Nepodařilo se odebrat cvik.");
-                        }
-                    }}
-                />
-            </AppCard>
-        );
     };
 
     if (loading) {
@@ -231,12 +199,20 @@ const WorkoutPlanDetailsScreen = ({ route }) => {
 
             <AppTitle>Cviky v plánu</AppTitle>
 
-            <DraggableFlatList
-                data={exercises}
-                keyExtractor={(item) => item.id?.toString()}
-                renderItem={({ item, drag }) => renderItem(item, drag)} // ← uprav
-                onDragEnd={({ data }) => setExercises(data)}
-            />
+            {exercises.map((item) => {
+                const full = availableExercises.find((e) => e.id === item.exerciseId);
+                return (
+                    <AppCard key={item.id}>
+                        <Text style={styles.exerciseName}>{full?.name || 'Neznámý cvik'}</Text>
+                        <Text>{item.sets}x{item.reps} • {item.restSeconds || 60}s pauza • Pořadí: {item.orderIndex}</Text>
+                        <AppButton
+                            title="Odebrat"
+                            color={colors.danger}
+                            onPress={() => handleDelete(item.id)}
+                        />
+                    </AppCard>
+                );
+            })}
         </ScrollView>
     );
 };
