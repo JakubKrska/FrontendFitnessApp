@@ -52,8 +52,10 @@ const DashboardScreen = () => {
             const history = await apiFetch("/workout-history", {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setWorkoutHistory(history);
-            setStreak(calculateStreak(history));
+
+            const sorted = [...history].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+            setWorkoutHistory(sorted);
+            setStreak(calculateStreak(sorted));
         } catch (e) {
             console.error("Chyba načítání historie:", e);
         }
