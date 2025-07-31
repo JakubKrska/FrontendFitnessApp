@@ -83,20 +83,6 @@ const DashboardScreen = () => {
         load();
     }, [fetchUser, fetchHistory, fetchPlans]));
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            headerRight: () => (
-                <AppButton
-                    title="Odhlásit se"
-                    color={colors.danger}
-                    onPress={async () => {
-                        await AsyncStorage.clear();
-                        navigation.navigate("Login");
-                    }}
-                />
-            ),
-        });
-    }, [navigation]);
 
     const calculateStreak = (history) => {
         const days = new Set(history.map(h =>
@@ -127,7 +113,7 @@ const DashboardScreen = () => {
 
     return (
         <ScrollView style={styles.container}>
-            <AppTitle>Tvé pokroky</AppTitle>
+            <AppTitle>Tvůj přehled</AppTitle>
             {userData && (
                 <AppCard>
                     <Text>{userData.name}</Text>
@@ -135,11 +121,10 @@ const DashboardScreen = () => {
                     <Text>Výška: {userData.height} cm</Text>
                     <Text>Váha: {userData.weight} kg</Text>
                     <Text>BMI: {bmi ? `${bmi} (${getBMIStatus(bmi)})` : "Zadej výšku a váhu v profilu"}</Text>
-                    <Text>Úroveň: {userData.experienceLevel}</Text>
                 </AppCard>
             )}
 
-            <AppTitle>Rychlé akce</AppTitle>
+            <AppTitle>Zaznamenání váhy</AppTitle>
             <AppButton title="Vývoj váhy" onPress={() => navigation.navigate("WeightScreen")} />
 
             <AppTitle>Aktivní dny v řadě</AppTitle>
@@ -147,7 +132,7 @@ const DashboardScreen = () => {
                 <Text style={styles.streak}>{streak} dní v řadě</Text>
             </AppCard>
 
-            <AppTitle>Tréninkové plány</AppTitle>
+            <AppTitle>Tvé tréninkové plány</AppTitle>
             {userPlans.length === 0 ? (
                 <Text>Nemáš žádné tréninkové plány</Text>
             ) : (
@@ -164,7 +149,7 @@ const DashboardScreen = () => {
                 ))
             )}
 
-            <AppTitle>Poslední cvičení</AppTitle>
+            <AppTitle>Tvé poslední cvičení</AppTitle>
             {!lastWorkout ? (
                 <Text>Žádné záznamy</Text>
             ) : (

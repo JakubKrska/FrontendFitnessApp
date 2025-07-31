@@ -41,7 +41,7 @@ const OnboardingGoalScreen = ({ navigation }) => {
             }
 
             // Přesměrování na dashboard
-            navigation.replace("Dashboard");
+            navigation.navigate("MainTabs");
 
         } catch (err) {
             console.error("Chyba při ukládání goal:", err);

@@ -16,7 +16,7 @@ const BadgeDetailModal = ({visible, onClose, badge}) => {
                     )}
                     <Text style={styles.title}>{badge.name}</Text>
                     <Text style={styles.description}>{badge.description || "Bez popisu"}</Text>
-                    <Text style={styles.condition}>Podmínka: {badge.conditionType} = {badge.conditionValue}</Text>
+
 
                     <TouchableOpacity onPress={onClose} style={styles.button}>
                         <Text style={styles.buttonText}>Zavřít</Text>

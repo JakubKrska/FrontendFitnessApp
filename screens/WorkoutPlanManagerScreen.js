@@ -1,12 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    ScrollView,
     StyleSheet,
     FlatList,
     Text,
     View,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
@@ -19,7 +18,6 @@ import { colors, spacing } from '../components/ui/theme';
 import { apiFetch } from '../api';
 
 const WorkoutPlanManagerScreen = ({ navigation }) => {
-    const scrollRef = useRef();
     const [plans, setPlans] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
@@ -32,15 +30,16 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
     const [userId, setUserId] = useState('');
     const [filterGoal, setFilterGoal] = useState('');
     const [filterLevel, setFilterLevel] = useState('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const loadCredentials = async () => {
+        const load = async () => {
             const storedToken = await AsyncStorage.getItem('token');
             const storedUserId = await AsyncStorage.getItem('userId');
             setToken(storedToken);
             setUserId(storedUserId);
         };
-        loadCredentials();
+        load();
     }, []);
 
     useEffect(() => {
@@ -48,10 +47,17 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
     }, [token]);
 
     const fetchPlans = async () => {
-        const data = await apiFetch(`/workout-plans`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        setPlans(data);
+        try {
+            setLoading(true);
+            const data = await apiFetch(`/workout-plans`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setPlans(data);
+        } catch (err) {
+            Alert.alert('Chyba', 'Nepodařilo se načíst plány.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSubmit = async () => {
@@ -109,7 +115,6 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
             experienceLevel: plan.experienceLevel || '',
             goal: plan.goal || '',
         });
-        scrollRef.current?.scrollTo({ y: 0, animated: true });
         Alert.alert('Úprava plánu', `Upravuješ plán: ${plan.name}`);
     };
 
@@ -138,7 +143,6 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
                     title="Detail"
                     onPress={() => navigation.navigate('WorkoutPlanDetails', { planId: item.id })}
                 />
-
                 {isOwner && (
                     <>
                         <AppButton title="Upravit" onPress={() => handleEdit(item)} />
@@ -153,7 +157,7 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
         );
     };
 
-    if (!userId) {
+    if (!userId || loading) {
         return (
             <View style={styles.loading}>
                 <ActivityIndicator size="large" color={colors.primary} />
@@ -162,106 +166,95 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
     }
 
     return (
-        <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
+        <FlatList
+            ListHeaderComponent={
+                <View>
+                    <View style={styles.filterSection}>
+                        <Text style={styles.pickerLabel}>Filtruj cíl:</Text>
+                        <Picker selectedValue={filterGoal} onValueChange={setFilterGoal}>
+                            <Picker.Item label="Vše" value="" />
+                            <Picker.Item label="Nabrat svaly" value="Nabrat svaly" />
+                            <Picker.Item label="Zhubnout" value="Zhubnout" />
+                            <Picker.Item label="Zlepšit kondici" value="Zlepšit kondici" />
+                            <Picker.Item label="Zdravotní důvody" value="Zdravotní důvody" />
+                            <Picker.Item label="Zvýšit sílu" value="Zvýšit sílu" />
+                        </Picker>
 
+                        <Text style={styles.pickerLabel}>Filtruj úroveň:</Text>
+                        <Picker selectedValue={filterLevel} onValueChange={setFilterLevel}>
+                            <Picker.Item label="Vše" value="" />
+                            <Picker.Item label="Začátečník" value="Začátečník" />
+                            <Picker.Item label="Pokročilý" value="Pokročilý" />
+                            <Picker.Item label="Expert" value="Expert" />
+                        </Picker>
+                    </View>
 
-            {/* Filtrace */}
-            <View style={styles.filterSection}>
-                <Text style={styles.pickerLabel}>Filtruj cíl:</Text>
-                <Picker selectedValue={filterGoal} onValueChange={setFilterGoal}>
-                    <Picker.Item label="Vše" value="" />
-                    <Picker.Item label="Nabrat svaly" value="Nabrat svaly" />
-                    <Picker.Item label="Zhubnout" value="Zhubnout" />
-                    <Picker.Item label="Zlepšit kondici" value="Zlepšit kondici" />
-                    <Picker.Item label="Zdravotní důvody" value="Zdravotní důvody" />
-                    <Picker.Item label="Zvýšit sílu" value="Zvýšit sílu" />
-                </Picker>
+                    <AppTitle>{editingPlan ? `Upravuješ plán: ${editingPlan.name}` : 'Přidat nový plán'}</AppTitle>
 
-                <Text style={styles.pickerLabel}>Filtruj úroveň:</Text>
-                <Picker selectedValue={filterLevel} onValueChange={setFilterLevel}>
-                    <Picker.Item label="Vše" value="" />
-                    <Picker.Item label="Začátečník" value="Začátečník" />
-                    <Picker.Item label="Pokročilý" value="Pokročilý" />
-                    <Picker.Item label="Expert" value="Expert" />
-                </Picker>
-            </View>
+                    <AppTextInput
+                        placeholder="Název plánu"
+                        value={formData.name}
+                        onChangeText={(text) => setFormData({ ...formData, name: text })}
+                    />
+                    <AppTextInput
+                        placeholder="Popis plánu"
+                        value={formData.description}
+                        onChangeText={(text) => setFormData({ ...formData, description: text })}
+                        multiline
+                    />
 
-            <AppTitle>
-                {editingPlan ? `Upravuješ plán: ${editingPlan.name}` : 'Přidat nový plán'}
-            </AppTitle>
+                    <Text style={styles.pickerLabel}>Úroveň</Text>
+                    <Picker
+                        selectedValue={formData.experienceLevel}
+                        onValueChange={(val) => setFormData({ ...formData, experienceLevel: val })}
+                    >
+                        <Picker.Item label="-- Vyber úroveň --" value="" />
+                        <Picker.Item label="Začátečník" value="Začátečník" />
+                        <Picker.Item label="Pokročilý" value="Pokročilý" />
+                        <Picker.Item label="Expert" value="Expert" />
+                    </Picker>
 
-            <AppTextInput
-                placeholder="Název plánu"
-                value={formData.name}
-                onChangeText={(text) => setFormData({ ...formData, name: text })}
-            />
-            <AppTextInput
-                placeholder="Popis plánu"
-                value={formData.description}
-                onChangeText={(text) => setFormData({ ...formData, description: text })}
-                multiline
-            />
-            <View style={styles.pickerWrapper}>
-                <Text style={styles.pickerLabel}>Úroveň</Text>
-                <Picker
-                    selectedValue={formData.experienceLevel}
-                    onValueChange={(val) => setFormData({ ...formData, experienceLevel: val })}
-                >
-                    <Picker.Item label="-- Vyber úroveň --" value="" />
-                    <Picker.Item label="Začátečník" value="Začátečník" />
-                    <Picker.Item label="Pokročilý" value="Pokročilý" />
-                    <Picker.Item label="Expert" value="Expert" />
-                </Picker>
-            </View>
+                    <Text style={styles.pickerLabel}>Cíl</Text>
+                    <Picker
+                        selectedValue={formData.goal}
+                        onValueChange={(val) => setFormData({ ...formData, goal: val })}
+                    >
+                        <Picker.Item label="-- Vyber cíl --" value="" />
+                        <Picker.Item label="Zhubnout" value="Zhubnout" />
+                        <Picker.Item label="Nabrat svaly" value="Nabrat svaly" />
+                        <Picker.Item label="Zůstat fit" value="Zůstat fit" />
+                        <Picker.Item label="Zdravotní důvody" value="Zdravotní důvody" />
+                    </Picker>
 
-            <View style={styles.pickerWrapper}>
-                <Text style={styles.pickerLabel}>Cíl</Text>
-                <Picker
-                    selectedValue={formData.goal}
-                    onValueChange={(val) => setFormData({ ...formData, goal: val })}
-                >
-                    <Picker.Item label="-- Vyber cíl --" value="" />
-                    <Picker.Item label="Zhubnout" value="Zhubnout" />
-                    <Picker.Item label="Nabrat svaly" value="Nabrat svaly" />
-                    <Picker.Item label="Zůstat fit" value="Zůstat fit" />
-                    <Picker.Item label="Zdravotní důvody" value="Zdravotní důvody" />
-                </Picker>
-            </View>
+                    <AppButton
+                        title={editingPlan ? 'Uložit změny' : 'Přidat plán'}
+                        color={editingPlan ? colors.secondary : colors.primary}
+                        onPress={handleSubmit}
+                    />
 
-            <AppButton
-                title={editingPlan ? 'Uložit změny' : 'Přidat plán'}
-                color={editingPlan ? colors.secondary : colors.primary}
-                onPress={handleSubmit}
-            />
+                    {editingPlan && (
+                        <AppButton
+                            title="Zrušit úpravu"
+                            color={colors.gray}
+                            onPress={() => {
+                                setEditingPlan(null);
+                                setFormData({ name: '', description: '', experienceLevel: '', goal: '' });
+                            }}
+                        />
+                    )}
 
-            {editingPlan && (
-                <AppButton
-                    title="Zrušit úpravu"
-                    color={colors.gray}
-                    onPress={() => {
-                        setEditingPlan(null);
-                        setFormData({ name: '', description: '', experienceLevel: '', goal: '' });
-                    }}
-                />
-            )}
-
-            <AppTitle style={{ marginTop: spacing.large }}>Plány</AppTitle>
-
-            <FlatList
-                data={filteredPlans}
-                keyExtractor={(item) => item.id}
-                renderItem={renderPlan}
-                contentContainerStyle={{ paddingBottom: spacing.large }}
-            />
-        </ScrollView>
+                    <AppTitle style={{ marginTop: spacing.large }}>Plány</AppTitle>
+                </View>
+            }
+            data={filteredPlans}
+            keyExtractor={(item) => item.id}
+            renderItem={renderPlan}
+            contentContainerStyle={{ padding: spacing.large }}
+        />
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        padding: spacing.large,
-        backgroundColor: colors.background,
-    },
     loading: {
         flex: 1,
         justifyContent: 'center',
@@ -287,7 +280,7 @@ const styles = StyleSheet.create({
     },
     filterSection: {
         marginBottom: spacing.large,
-    }
+    },
 });
 
 export default WorkoutPlanManagerScreen;

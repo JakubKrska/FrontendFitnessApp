@@ -133,6 +133,14 @@ const ProfileScreen = () => {
                 badge={selectedBadge}
                 onClose={() => setSelectedBadge(null)}
             />
+            <AppButton
+                title="Odhlásit se"
+                color={colors.danger}
+                onPress={async () => {
+                    await AsyncStorage.clear();
+                    navigation.navigate("Login");
+                }}
+            />
         </View>
     );
 };
