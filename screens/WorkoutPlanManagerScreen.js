@@ -32,20 +32,6 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
     const [filterLevel, setFilterLevel] = useState('');
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const load = async () => {
-            const storedToken = await AsyncStorage.getItem('token');
-            const storedUserId = await AsyncStorage.getItem('userId');
-            setToken(storedToken);
-            setUserId(storedUserId);
-        };
-        load();
-    }, []);
-
-    useEffect(() => {
-        if (token) fetchPlans();
-    }, [token]);
-
     const fetchPlans = async () => {
         try {
             setLoading(true);
@@ -59,6 +45,20 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const load = async () => {
+            const storedToken = await AsyncStorage.getItem('token');
+            const storedUserId = await AsyncStorage.getItem('userId');
+            setToken(storedToken);
+            setUserId(storedUserId?.toString() || '');
+        };
+        load();
+    }, []);
+
+    useEffect(() => {
+        if (token) fetchPlans();
+    }, [token]);
 
     const handleSubmit = async () => {
         const { name, description, experienceLevel, goal } = formData;
@@ -78,33 +78,31 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
                 headers: { Authorization: `Bearer ${token}` },
                 body: JSON.stringify(formData),
             });
-            await fetchPlans();
+
             setFormData({ name: '', description: '', experienceLevel: '', goal: '' });
             setEditingPlan(null);
+            await fetchPlans(); // <--- Refresh po přidání
         } catch (err) {
             Alert.alert('Chyba', err.message || 'Nepodařilo se uložit plán.');
         }
     };
 
     const handleDelete = async (id) => {
-        Alert.alert('Smazat plán?', 'Opravdu chceš plán smazat?', [
-            { text: 'Zrušit', style: 'cancel' },
-            {
-                text: 'Smazat',
-                style: 'destructive',
-                onPress: async () => {
-                    try {
-                        await apiFetch(`/workout-plans/${id}`, {
-                            method: 'DELETE',
-                            headers: { Authorization: `Bearer ${token}` },
-                        });
-                        await fetchPlans();
-                    } catch (err) {
-                        Alert.alert('Chyba', err.message || 'Nepodařilo se smazat plán.');
-                    }
-                }
-            },
-        ]);
+        console.log("Mazání plánu:");
+        console.log("ID:", id);
+        console.log("Token:", token);
+        console.log("URL:", `/workout-plans/${id}`);
+        try {
+            const res = await apiFetch(`/workout-plans/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            console.log("✅ Odpověď:", res);
+            await fetchPlans();
+        } catch (err) {
+            console.error("❌ CHYBA:", err);
+            Alert.alert("Chyba", err.message || "Mazání selhalo.");
+        }
     };
 
     const handleEdit = (plan) => {
@@ -119,6 +117,7 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
     };
 
     const filteredPlans = plans
+        .filter(p => p.userId?.toString() === userId || p.isDefault) // ✅ fix
         .filter(p => (filterGoal ? p.goal === filterGoal : true))
         .filter(p => (filterLevel ? p.experienceLevel === filterLevel : true))
         .sort((a, b) => {
@@ -128,7 +127,7 @@ const WorkoutPlanManagerScreen = ({ navigation }) => {
         });
 
     const renderPlan = ({ item }) => {
-        const isOwner = item.userId === userId;
+        const isOwner = item.userId?.toString() === userId;
         const cardStyle = item.isDefault ? styles.defaultCard : null;
 
         return (
