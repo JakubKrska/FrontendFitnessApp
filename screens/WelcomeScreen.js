@@ -2,26 +2,32 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import AppButton from "../components/ui/AppButton";
 import { colors, spacing } from "../components/ui/theme";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const WelcomeScreen = ({ navigation }) => {
-
-    const handleNavigate = async (screen) => {
-        try {
-            await AsyncStorage.setItem("hasSeenWelcome", "true");
-            navigation.navigate(screen);
-        } catch (e) {
-            console.error("Chyba při ukládání hasSeenWelcome:", e);
-        }
+    const handleNavigate = (screen) => {
+        navigation.navigate(screen);
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Vítej ve FitnessApp</Text>
-            <Text style={styles.subtitle}>Sleduj pokroky, plánuj tréninky, motivuj se.</Text>
+            <View style={styles.content}>
+                <Text style={styles.title}>Vítej ve FitnessApp</Text>
+                <Text style={styles.subtitle}>
+                    Sleduj pokroky, plánuj tréninky, motivuj se.
+                </Text>
 
-            <AppButton title="Přihlásit se" onPress={() => handleNavigate("Login")} />
-            <AppButton title="Registrace" onPress={() => handleNavigate("Register")} />
+                <View style={styles.buttonGroup}>
+                    <AppButton
+                        title="Přihlásit se"
+                        onPress={() => handleNavigate("Login")}
+                    />
+                    <AppButton
+                        title="Registrace"
+                        onPress={() => handleNavigate("Register")}
+                        color={colors.secondary}
+                    />
+                </View>
+            </View>
         </View>
     );
 };
@@ -29,13 +35,18 @@ const WelcomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: colors.background,
         justifyContent: "center",
         alignItems: "center",
         padding: spacing.large,
-        backgroundColor: colors.background,
+    },
+    content: {
+        width: "100%",
+        maxWidth: 400,
+        alignItems: "center",
     },
     title: {
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: "bold",
         color: colors.primary,
         marginBottom: spacing.medium,
@@ -44,8 +55,11 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 16,
         color: colors.text,
-        marginBottom: spacing.large,
+        marginBottom: spacing.xlarge,
         textAlign: "center",
+    },
+    buttonGroup: {
+        width: "100%",
     },
 });
 

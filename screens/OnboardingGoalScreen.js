@@ -20,7 +20,6 @@ const OnboardingGoalScreen = ({ navigation }) => {
 
     const saveGoal = async () => {
         const token = await AsyncStorage.getItem("token");
-
         if (!token) {
             Alert.alert("Chyba", "Přihlášení selhalo");
             return;
@@ -28,6 +27,7 @@ const OnboardingGoalScreen = ({ navigation }) => {
 
         try {
             if (selectedGoal) {
+                // Uložíme cíl do backendu
                 const response = await apiFetch("/users/me", {
                     method: "PATCH",
                     headers: {
@@ -38,59 +38,80 @@ const OnboardingGoalScreen = ({ navigation }) => {
                 });
 
                 console.log("Goal uložen:", response);
+
+
+                navigation.navigate("RecommendedPlans", { goal: selectedGoal });
+            } else {
+
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: "MainTabs" }],
+                });
             }
-
-            // Přesměrování na dashboard
-            navigation.navigate("MainTabs");
-
         } catch (err) {
             console.error("Chyba při ukládání goal:", err);
             Alert.alert("Chyba", "Nepodařilo se uložit cíl.");
         }
     };
 
+
     return (
         <View style={styles.container}>
-            <AppTitle>Jaký je tvůj cíl?</AppTitle>
+            <View style={styles.inner}>
+                <AppTitle style={styles.title}>Jaký je tvůj cíl?</AppTitle>
 
-            {selectedGoal && (
-                <Text style={styles.selected}>Zvolený cíl: {selectedGoal}</Text>
-            )}
+                <View style={styles.goals}>
+                    {GOALS.map((goal) => (
+                        <AppButton
+                            key={goal}
+                            title={goal}
+                            onPress={() => setSelectedGoal(goal)}
+                            style={[
+                                styles.goalButton,
+                                selectedGoal === goal && styles.goalButtonSelected
+                            ]}
+                            textStyle={{
+                                color: selectedGoal === goal ? colors.white : colors.text,
+                            }}
+                        />
+                    ))}
+                </View>
 
-            {GOALS.map((goal) => (
-                <AppButton
-                    key={goal}
-                    title={goal}
-                    onPress={() => setSelectedGoal(goal)}
-                    style={{
-                        backgroundColor: selectedGoal === goal ? colors.primary : colors.card,
-                        marginBottom: spacing.small,
-                    }}
-                    textStyle={{
-                        color: selectedGoal === goal ? colors.white : colors.text,
-                    }}
-                />
-            ))}
-
-            <AppButton
-                title={selectedGoal ? "Pokračovat" : "Přeskočit a pokračovat"}
-                onPress={saveGoal}
-            />
+                <View style={{ marginTop: spacing.large }}>
+                    <AppButton
+                        title={selectedGoal ? "Pokračovat" : "Přeskočit a pokračovat"}
+                        onPress={saveGoal}
+                    />
+                </View>
+            </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        padding: spacing.large,
-        backgroundColor: colors.background,
         flex: 1,
+        backgroundColor: colors.background,
+        padding: spacing.large,
     },
-    selected: {
-        textAlign: 'center',
-        marginBottom: spacing.medium,
-        color: colors.primary,
-        fontWeight: 'bold',
+    inner: {
+        flex: 1,
+        justifyContent: "center",
+    },
+    title: {
+        marginBottom: spacing.large,
+        textAlign: "center",
+    },
+    goals: {
+        gap: spacing.small,
+        marginBottom: spacing.large,
+    },
+    goalButton: {
+        backgroundColor: colors.card,
+        paddingVertical: spacing.medium,
+    },
+    goalButtonSelected: {
+        backgroundColor: colors.primary,
     },
 });
 

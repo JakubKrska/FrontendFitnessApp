@@ -108,6 +108,11 @@ const DashboardScreen = () => {
             </View>
         );
     }
+    const getStreakText = (count) => {
+        if (count === 1) return "1 aktivní den v řadě";
+        if (count >= 2 && count <= 4) return `${count} aktivní dny v řadě`;
+        return `${count} aktivních dnů v řadě`;
+    };
 
     const lastWorkout = workoutHistory[0];
 
@@ -129,7 +134,7 @@ const DashboardScreen = () => {
 
             <AppTitle>Aktivní dny v řadě</AppTitle>
             <AppCard>
-                <Text style={styles.streak}>{streak} dní v řadě</Text>
+                <Text style={styles.streak}>{getStreakText(streak)}</Text>
             </AppCard>
 
             <AppTitle>Tvé tréninkové plány</AppTitle>

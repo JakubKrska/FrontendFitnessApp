@@ -187,13 +187,6 @@ const WorkoutPlanDetailsScreen = ({ route }) => {
                 onChangeText={(val) => setFormData({ ...formData, orderIndex: Number(val) })}
             />
 
-            <Text style={styles.label}>Doporučená váha (kg) – volitelné</Text>
-            <AppTextInput
-                keyboardType="numeric"
-                placeholder="Např. 40"
-                value={formData.weight?.toString() || ''}
-                onChangeText={(val) => setFormData({ ...formData, weight: val ? parseFloat(val) : '' })}
-            />
 
             <AppButton title="Přidat cvik do plánu" onPress={handleAdd} />
 

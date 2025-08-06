@@ -42,21 +42,14 @@ export default function App() {
 
     useEffect(() => {
         const checkStartupState = async () => {
-            const token = await AsyncStorage.getItem("token");
-            const seenWelcome = await AsyncStorage.getItem("hasSeenWelcome");
-
-            if (!seenWelcome) return setInitialRoute("Welcome");
-            if (!token) return setInitialRoute("Login");
-
             try {
-                const user = await apiFetch("/users/me");
-                if (!user.goal || user.goal === "") {
-                    return setInitialRoute("OnboardingGoal");
-                }
-                return setInitialRoute("MainTabs");
+                const token = await AsyncStorage.getItem("token");
+
+
+                setInitialRoute("Welcome");
             } catch (e) {
-                console.error("Chyba při načítání uživatele", e);
-                return setInitialRoute("Login");
+                console.error("Chyba při načítání tokenu", e);
+                setInitialRoute("Welcome"); // fallback
             }
         };
 
@@ -88,7 +81,6 @@ export default function App() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <NavigationContainer>
                 <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
-                    {/* Tvůj stack */}
                     <Stack.Screen name="Welcome" component={WelcomeScreen} />
                     <Stack.Screen name="Login" component={LoginScreen} />
                     <Stack.Screen name="Register" component={RegisterScreen} />

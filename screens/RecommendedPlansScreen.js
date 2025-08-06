@@ -1,15 +1,15 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, Alert, ScrollView} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import AppCard from '../components/ui/AppCard';
 import AppButton from '../components/ui/AppButton';
 import AppTitle from '../components/ui/AppTitle';
-import {colors, spacing} from '../components/ui/theme';
+import { colors, spacing } from '../components/ui/theme';
 import { apiFetch } from '../api';
 
-const RecommendedPlansScreen = ({route, navigation}) => {
-    const {goal} = route.params;
+const RecommendedPlansScreen = ({ route, navigation }) => {
+    const { goal = "Zhubnout" } = route.params ?? {};  // výchozí hodnota, pokud není goal předán
     const [plans, setPlans] = useState([]);
 
     const fetchPlans = async () => {
@@ -17,7 +17,7 @@ const RecommendedPlansScreen = ({route, navigation}) => {
             const token = await AsyncStorage.getItem("token");
 
             const allPlans = await apiFetch("/workout-plans", {
-                headers: {Authorization: `Bearer ${token}`},
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             const filtered = allPlans.filter(
@@ -30,12 +30,19 @@ const RecommendedPlansScreen = ({route, navigation}) => {
         }
     };
 
+
     const selectPlan = async (planId) => {
         try {
             const token = await AsyncStorage.getItem("token");
             const userId = await AsyncStorage.getItem("userId");
 
             if (!userId || !token) return;
+
+            const selectedPlan = plans.find((p) => p.id === planId);
+            if (!selectedPlan) {
+                Alert.alert("Chyba", "Plán se nepodařilo najít.");
+                return;
+            }
 
             await apiFetch("/workout-plans", {
                 method: "POST",
@@ -45,19 +52,19 @@ const RecommendedPlansScreen = ({route, navigation}) => {
                 },
                 body: JSON.stringify({
                     userId,
-                    name: "Můj plán – " + goal,
-                    description: "Doporučený plán pro cíl: " + goal,
-                    goal,
-                    experienceLevel: "Začátečník",
+                    name: selectedPlan.name,
+                    description: selectedPlan.description,
+                    goal: selectedPlan.goal,
+                    experienceLevel: selectedPlan.experienceLevel,
                     isDefault: false,
-                    basePlanId: planId,
+                    basePlanId: selectedPlan.id,
                 }),
             });
 
-            Alert.alert("Plán přidán", "Doporučený plán byl přidán mezi tvé tréninky.");
+            Alert.alert("Plán přidán", "Plán byl úspěšně přidán mezi tvé tréninky.");
             navigation.reset({
                 index: 0,
-                routes: [{ name: "Dashboard" }],
+                routes: [{ name: "MainTabs" }],
             });
         } catch (err) {
             Alert.alert("Chyba", typeof err === "string" ? err : "Nepodařilo se přidat plán.");
@@ -78,7 +85,7 @@ const RecommendedPlansScreen = ({route, navigation}) => {
                     <AppCard key={plan.id}>
                         <Text style={styles.name}>{plan.name}</Text>
                         <Text>{plan.description}</Text>
-                        <AppButton title="Vybrat tento plán" onPress={() => selectPlan(plan.id)}/>
+                        <AppButton title="Vybrat tento plán" onPress={() => selectPlan(plan.id)} />
                     </AppCard>
                 ))
             )}
