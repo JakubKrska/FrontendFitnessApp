@@ -44,7 +44,7 @@ const ExerciseManagerScreen = () => {
 
     const [localImage, setLocalImage] = useState(null);
 
-    const muscleGroups = ['Hrudník', 'Záda', 'Nohy', 'Břicho', 'Ramena', 'Biceps', 'Triceps'];
+    const muscleGroups = ['Hrudník', 'Záda', 'Nohy','Prsa', 'Břicho', 'Ramena','Hamstring', 'Biceps', 'Triceps', 'Celé tělo', 'Kvadriceps', 'Hýždě'  ];
     const difficulties = ['Začátečník','Pokročilý', 'Expert'];
 
     useEffect(() => {
